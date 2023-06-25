@@ -5,6 +5,9 @@ const theme = createTheme({
   palette: {
     primary: orange,
     secondary: grey,
+    background: {
+      default: '#27374D',
+    },
   },
   direction: 'rtl',
   typography: {

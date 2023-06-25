@@ -1,0 +1,32 @@
+.MuiBox-root.muirtl-qktu4z {
+    padding: 20px;
+}
+
+.MuiPaper-root.MuiPaper-elevation.MuiPaper-rounded {
+    background-color: #435B66;
+}
+
+.MuiCardHeader-content .MuiTypography-h5.MuiCardHeader-title {
+    color: white;
+    font-size: 16px;
+}
+.MuiInputBase-root div, .MuiInputBase-root .MuiInputBase-input {
+    color: white;
+}
+
+.MuiFormControl-root label {
+    color: #3b3d3d;
+}
+
+.MuiGrid-root .MuiSvgIcon-root {
+    vertical-align: middle;
+    margin-left: 8px;
+}
+
+.MuiGrid-container .MuiGrid-root {
+    margin-inline: 4px;
+}
+
+.MuiGrid-container .MuiGrid-root:nth-child(4) {
+    margin-right: 37%;
+}

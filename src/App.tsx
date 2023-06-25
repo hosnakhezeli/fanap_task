@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Container from '@mui/material/Container';
 import type { FC } from 'react';
 import {
   Box,
@@ -30,29 +31,28 @@ interface SocialMediaListType {
 }
 
 const App: FC = () => {
-  const [openForm, setOpenForm] = useState<boolean>(false);
+  const [collapseOpen, setCollapseOpen] = useState<boolean>(false);
   const [openAlertBox, setOpenAlertBox] = useState<boolean>(false);
-  const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [socialMediaList, setSocialMediaList] = useState<SocialMediaListType[]>([{ id: 'test@test', link: 'https://google.com', type: 'instagram' }]);
-  const [currentItemId, setCurrentItemId] = useState<string>('');
+  const [socialMediaList, setSocialMediaList] = useState<SocialMediaListType[]>([{ id: 'test', link: 'https://google.com', type: 'instagram' }]);
+  const [currentSocialMedia, setCurrentSocialMedia] = useState<SocialMediaListType | null>(null);
 
-  const handleOpenForm = (): void => {
-    setOpenForm(true);
+  const onCollapseOpen = (): void => {
+    setCollapseOpen(true);
   };
 
-  const handleCloseForm = (): void => {
-    setOpenForm(false);
+  const onCollapseClose = (): void => {
+    setCollapseOpen(false);
   };
 
   const toggleOpenForm = (): void => {
-    setOpenForm(!openForm);
+    setCollapseOpen((prevOpenForm) => !prevOpenForm);
   };
 
   const closeAlertBox = (): void => {
     setOpenAlertBox(false);
   };
 
-  const addListItem = (values: SocialMediaListType): void => {
+  const add = (values: SocialMediaListType): void => {
     const found = socialMediaList.some(
       (item) => item.id === values.id || item.link === values.link || item.type === values.type,
     );
@@ -66,9 +66,9 @@ const App: FC = () => {
     }
   };
 
-  const editListItem = (values: SocialMediaListType): void => {
+  const setEdit = (values: SocialMediaListType): void => {
     const newSocialMediaList = [...socialMediaList];
-    const foundIndex = socialMediaList.findIndex((item) => item.id === currentItemId);
+    const foundIndex = socialMediaList.findIndex((item) => item.id === currentSocialMedia.id);
 
     newSocialMediaList[foundIndex] = {
       id: values.id,
@@ -77,207 +77,219 @@ const App: FC = () => {
     };
 
     setSocialMediaList(newSocialMediaList);
-    setIsEditing(false);
+    setCurrentSocialMedia(null);
   };
 
-  const deleteButtonClick = (id: string): void => {
-    setCurrentItemId(id);
-    setOpenAlertBox(true);
-  };
-
-  const deleteItem = (): void => {
-    const updatedList = socialMediaList.filter((item) => item.id !== currentItemId);
+  const setDelete = (): void => {
+    const updatedList = socialMediaList.filter((item) => item.id !== currentSocialMedia.id);
     setSocialMediaList(updatedList);
     closeAlertBox();
   };
 
   const formik = useFormik({
     initialValues: { type: '', link: '', id: '' },
-    onReset: () => {
-      setIsEditing(false);
-    },
     onSubmit: (values, { setSubmitting, resetForm }) => {
       setTimeout(() => {
-        if (isEditing) {
-          editListItem(values);
+        if (currentSocialMedia) {
+          setEdit(values);
         } else {
-          addListItem(values);
+          add(values);
         }
         setSubmitting(false);
         resetForm();
       }, 400);
     },
   });
-
-  const editItem = (item: SocialMediaListType): void => {
-    handleOpenForm();
-    setIsEditing(true);
-    formik.setFieldValue('id', item.id);
-    formik.setFieldValue('link', item.link);
-    formik.setFieldValue('type', item.type);
-    setCurrentItemId(item.id);
+  const onDelete = (SocialMediaItem: SocialMediaListType): void => {
+    setCurrentSocialMedia(SocialMediaItem);
+    setOpenAlertBox(true);
   };
 
-  const handleCancelForm = (): void => {
+  const onEdit = (item: SocialMediaListType): void => {
+    onCollapseOpen();
+    formik.setValues(item as SocialMediaListType);
+    setCurrentSocialMedia(item);
+  };
+
+  const onCancel = (): void => {
     formik.resetForm();
-    handleCloseForm();
+    onCollapseClose();
+    setCurrentSocialMedia(null);
   };
+
+  const {
+    values,
+    touched,
+    errors,
+    isSubmitting,
+    handleSubmit,
+    handleChange,
+  } = formik;
 
   return (
-    <Box>
-      <AlertBox
-        title="آیا از تصمیم خود مطمئن هستید؟"
-        open={openAlertBox}
-        itemId={currentItemId}
-        handleClose={closeAlertBox}
-        handleAction={deleteItem}
-      />
-      <Typography>
-        مسیر های ارتباطی
-      </Typography>
-      <Button onClick={toggleOpenForm} variant="text" endIcon={getIcon('add')}>
-        {isEditing
-          ? (
-            <Typography>
-              ویرایش مسیر ارتباطی
-            </Typography>
-          )
-          : (
-            <Typography>
-              افزودن مسیر ارتباطی
-            </Typography>
-          )}
-      </Button>
-      <Collapse in={openForm}>
-        <form onSubmit={formik.handleSubmit}>
-          <Card>
-            <CardHeader title={isEditing ? `ویرایش مسیر ارتباطی ${SOCIAL_MEDIA_TYPES[formik.values.type]}` : 'افزودن مسیر ارتباطی'} />
-            <CardContent>
-              <Grid container justifyContent="space-evenly" spacing={2}>
-                <Grid item xs={4}>
-                  <FormControl fullWidth sx={{ minWidth: 120 }}>
-                    <InputLabel id="type-value-select-label">
-                      نوع*
-                    </InputLabel>
-                    <Select
-                      labelId="type-value-select-label"
-                      label="نوع*"
-                      name="type"
-                      value={formik.values.type}
-                      onChange={formik.handleChange}
-                      renderValue={(value) => (
-                        <div style={{ display: 'flex', alignItems: 'center' }}>
-                          {getIcon(formik.values.type)}
-                          {value}
-                        </div>
-                      )}
-                    >
-                      <MenuItem value="instagram">
-                        <Typography>
-                          {SOCIAL_MEDIA_TYPES.instagram}
-                        </Typography>
-                      </MenuItem>
-                      <MenuItem value="facebook">
-                        <Typography>
-                          {SOCIAL_MEDIA_TYPES.facebook}
-                        </Typography>
-                      </MenuItem>
-                      <MenuItem value="telegram">
-                        <Typography>
-                          {SOCIAL_MEDIA_TYPES.telegram}
-                        </Typography>
-                      </MenuItem>
-                      <MenuItem value="twitter">
-                        <Typography>
-                          {SOCIAL_MEDIA_TYPES.twitter}
-                        </Typography>
-                      </MenuItem>
-                      <MenuItem value="linkedin">
-                        <Typography>
-                          {SOCIAL_MEDIA_TYPES.linkedin}
-                        </Typography>
-                      </MenuItem>
-                      <MenuItem value="website">
-                        <Typography>
-                          {SOCIAL_MEDIA_TYPES.website}
-                        </Typography>
-                      </MenuItem>
-                    </Select>
-                  </FormControl>
+    <Container maxWidth="md">
+      <Box
+        sx={{
+          backgroundColor: '#2D4356',
+          borderRadius: '16px',
+          p: '20 ',
+        }}
+      >
+        <AlertBox
+          confirm={setDelete}
+          dismiss={closeAlertBox}
+          open={openAlertBox}
+          title="آیا از تصمیم خود مطمئن هستید؟"
+        >
+          {/* {`لطفا تایید را بنویسید ${currentItem.id} برای حذف مسیر ارتباطی`} */}
+        </AlertBox>
+        <Typography>
+          مسیر های ارتباطی
+        </Typography>
+        <Button endIcon={getIcon(!currentSocialMedia ? 'add' : 'edit')} variant="text" onClick={toggleOpenForm}>
+          {currentSocialMedia
+            ? (
+              <Typography>
+                ویرایش مسیر ارتباطی
+              </Typography>
+            )
+            : (
+              <Typography>
+                افزودن مسیر ارتباطی
+              </Typography>
+            )}
+        </Button>
+        <Collapse in={collapseOpen}>
+          <form onSubmit={handleSubmit}>
+            <Card>
+              <CardHeader title={currentSocialMedia ? `ویرایش مسیر ارتباطی ${SOCIAL_MEDIA_TYPES[values.type]}` : 'افزودن مسیر ارتباطی'} />
+              <CardContent>
+                <Grid container justifyContent="space-evenly" spacing={2}>
+                  <Grid item xs={4}>
+                    <FormControl fullWidth sx={{ minWidth: 120 }}>
+                      <InputLabel id="type-value-select-label">
+                        نوع*
+                      </InputLabel>
+                      <Select
+                        label="نوع*"
+                        labelId="type-value-select-label"
+                        name="type"
+                        renderValue={(value) => (
+                          <div style={{ display: 'flex', alignItems: 'center' }}>
+                            {getIcon(values.type)}
+                            {value}
+                          </div>
+                        )}
+                        value={values.type}
+                        onChange={handleChange}
+                      >
+                        <MenuItem value="instagram">
+                          <Typography>
+                            {SOCIAL_MEDIA_TYPES.instagram}
+                          </Typography>
+                        </MenuItem>
+                        <MenuItem value="facebook">
+                          <Typography>
+                            {SOCIAL_MEDIA_TYPES.facebook}
+                          </Typography>
+                        </MenuItem>
+                        <MenuItem value="telegram">
+                          <Typography>
+                            {SOCIAL_MEDIA_TYPES.telegram}
+                          </Typography>
+                        </MenuItem>
+                        <MenuItem value="twitter">
+                          <Typography>
+                            {SOCIAL_MEDIA_TYPES.twitter}
+                          </Typography>
+                        </MenuItem>
+                        <MenuItem value="linkedin">
+                          <Typography>
+                            {SOCIAL_MEDIA_TYPES.linkedin}
+                          </Typography>
+                        </MenuItem>
+                        <MenuItem value="website">
+                          <Typography>
+                            {SOCIAL_MEDIA_TYPES.website}
+                          </Typography>
+                        </MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={4}>
+                    <TextField
+                      fullWidth
+                      error={Boolean(touched.link && errors.link)}
+                      label="لینک"
+                      name="link"
+                      value={values.link}
+                      onChange={handleChange}
+                    />
+                    {touched.link && errors.link && <div>{errors.link}</div>}
+                  </Grid>
+                  <Grid item xs={4}>
+                    <TextField
+                      fullWidth
+                      error={Boolean(touched.id && errors.id)}
+                      label="(ID) آی دی"
+                      name="id"
+                      value={values.id}
+                      onChange={handleChange}
+                    />
+                  </Grid>
                 </Grid>
-                <Grid item xs={4}>
-                  <TextField
-                    error={Boolean(formik.touched.link && formik.errors.link)}
-                    fullWidth
-                    label="لینک"
-                    name="link"
-                    value={formik.values.link}
-                    onChange={formik.handleChange}
-                  />
-                  {formik.touched.link && formik.errors.link && <div>{formik.errors.link}</div>}
-                </Grid>
-                <Grid item xs={4}>
-                  <TextField
-                    error={Boolean(formik.touched.id && formik.errors.id)}
-                    fullWidth
-                    label="(ID) آی دی"
-                    name="id"
-                    value={formik.values.id}
-                    onChange={formik.handleChange}
-                  />
-                </Grid>
-              </Grid>
-            </CardContent>
-            <CardActions sx={{ justifyContent: 'flex-end' }}>
-              <Button variant="outlined" onClick={handleCancelForm}>انصراف</Button>
-              <Button type="submit" disabled={formik.isSubmitting} variant="contained">
-                {isEditing
-                  ? (
-                    <Typography>
-                      {`ویرایش مسیر ارتباطی ${SOCIAL_MEDIA_TYPES[formik.values.type]}`}
-                    </Typography>
-                  )
-                  : (
-                    <Typography>
-                      افزودن مسیر ارتباطی
-                    </Typography>
-                  )}
-              </Button>
-            </CardActions>
-          </Card>
-        </form>
-      </Collapse>
-      <List>
-        {
-        socialMediaList.length ? socialMediaList.map((item) => (
-          <ListItem key={item.id}>
-            <Grid container alignItems="center">
-              <Grid item>
-                {SOCIAL_MEDIA_TYPES[item.type]}
-                {getIcon(item.type)}
-              </Grid>
-              <Grid item>
-                {item.id}
-              </Grid>
-              <Grid item>
-                {item.link}
-              </Grid>
-              <Grid item>
-                <Button onClick={() => editItem(item)} variant="text" startIcon={getIcon('edit')}>
-                  ویرایش
+              </CardContent>
+              <CardActions sx={{ justifyContent: 'flex-end' }}>
+                <Button variant="outlined" onClick={onCancel}>انصراف</Button>
+                <Button disabled={isSubmitting} type="submit" variant="contained">
+                  {currentSocialMedia
+                    ? (
+                      <Typography>
+                        {`ویرایش مسیر ارتباطی ${SOCIAL_MEDIA_TYPES[values.type]}`}
+                      </Typography>
+                    )
+                    : (
+                      <Typography>
+                        افزودن مسیر ارتباطی
+                      </Typography>
+                    )}
                 </Button>
+              </CardActions>
+            </Card>
+          </form>
+        </Collapse>
+        <List>
+          {
+          socialMediaList.length ? socialMediaList.map((item) => (
+            <ListItem key={item.id}>
+              <Grid container alignItems="center">
+                <Grid item>
+                  {getIcon(item.type)}
+                  {SOCIAL_MEDIA_TYPES[item.type]}
+                </Grid>
+                <Grid item>
+                  {item.id}
+                </Grid>
+                <Grid item>
+                  {item.link}
+                </Grid>
+                <Grid item>
+                  <Button startIcon={getIcon('edit')} variant="text" onClick={() => onEdit(item)}>
+                    ویرایش
+                  </Button>
+                </Grid>
+                <Grid item>
+                  <Button color="error" startIcon={getIcon('delete')} variant="text" onClick={() => onDelete(item)}>
+                    حذف
+                  </Button>
+                </Grid>
               </Grid>
-              <Grid item>
-                <Button color="error" onClick={() => deleteButtonClick(item.id)} variant="text" startIcon={getIcon('delete')}>
-                  حذف
-                </Button>
-              </Grid>
-            </Grid>
-          </ListItem>
-        )) : ''
-      }
-      </List>
-    </Box>
+            </ListItem>
+          )) : ''
+        }
+        </List>
+      </Box>
+    </Container>
   );
 };
 

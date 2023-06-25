@@ -5,6 +5,7 @@ import { CssBaseline } from '@mui/material';
 import theme from './theme';
 import App from './App';
 import RTL from './components/RTL';
+import './style.css';
 
 ReactDOM.render(
   <React.StrictMode>

@@ -1,56 +1,57 @@
-import { useState, ChangeEvent } from 'react';
+import React, { useState, ChangeEvent, useCallback } from 'react';
 import type { FC } from 'react';
 import {
-  Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Typography,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  TextField,
 } from '@mui/material';
-// import DialogContentText from '@mui/material/DialogContentText';
 
-interface Props {
-    title: string;
-    open: boolean;
-    itemId: string;
-    handleClose: () => void;
-    handleAction: () => void;
+export interface Props {
+  title: string;
+  open: boolean;
+  confirmPhrase?: string;
+  dismiss: () => void;
+  confirm?: () => void;
 }
 
 const AlertBox: FC<Props> = ({
-  title, open, itemId, handleClose, handleAction,
-}: Props) => {
-  const [confirmationText, setConfirmationText] = useState<string>('');
+  title, open, confirmPhrase = 'تایید', dismiss, confirm, children,
+}: React.PropsWithChildren<Props>) => {
+  const [phrase, setPhrase] = useState<string>('');
 
-  const changeConfirmationText = (e: ChangeEvent<HTMLInputElement>): void => {
-    setConfirmationText(e.target.value);
+  const handlePhraseChange = (e: ChangeEvent<HTMLInputElement>): void => {
+    const { value } = e.target;
+    setPhrase(value);
   };
 
-  const confirmAction = (): void => {
-    if (confirmationText === 'تایید') {
-      handleAction();
-    }
-  };
-
-  const clearConfirmationText = (): void => {
-    setConfirmationText('');
-  };
-
-  const onCloseClick = (): void => {
-    clearConfirmationText();
-    handleClose();
-  };
+  const onConfirm = useCallback((): void => {
+    setPhrase('');
+    confirm?.();
+  }, [confirm]);
 
   return (
-    <Dialog open={open} onClose={onCloseClick}>
+    <Dialog open={open} onClose={dismiss}>
       <DialogTitle>
         {title}
       </DialogTitle>
       <DialogContent>
-        <Typography>
-          {`لطفا تایید را بنویسید ${itemId} برای حذف مسیر ارتباطی`}
-        </Typography>
-        <TextField label="تایید" fullWidth value={confirmationText} onChange={changeConfirmationText} />
+        <DialogContentText sx={{ direction: 'rtl' }}>
+          {children}
+        </DialogContentText>
+        <TextField
+          fullWidth
+          label={confirmPhrase}
+          value={phrase}
+          onChange={handlePhraseChange}
+        />
       </DialogContent>
       <DialogActions>
-        <Button onClick={onCloseClick} variant="text">انصراف</Button>
-        <Button color="error" disabled={confirmationText !== 'تایید'} onClick={confirmAction} variant="text">حذف</Button>
+        <Button variant="text" onClick={dismiss}>انصراف</Button>
+        <Button color="error" disabled={phrase !== confirmPhrase} variant="text" onClick={onConfirm}>حذف</Button>
       </DialogActions>
     </Dialog>
   );
